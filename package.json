@@ -9,12 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@barba/core": "^2.10.3",
     "@openzeppelin/contracts": "^5.3.0",
     "@reown/appkit": "^1.7.2",
     "@reown/appkit-adapter-ethers": "^1.7.2",
     "@truffle/hdwallet-provider": "^2.1.15",
     "dotenv": "^16.5.0",
     "ethers": "^6.13.5",
+    "framer-motion": "^12.6.5",
+    "gsap": "^3.12.7",
     "next": "15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
