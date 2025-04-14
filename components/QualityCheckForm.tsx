@@ -162,7 +162,8 @@ export default function QualityCheckForm() {
         
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+          className="w-full py-3 px-6 bg-gray-900 hover:bg-gray-800 text-white py-2 px-4  rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+            
           disabled={!isConnected || loading}
         >
           {loading ? (

@@ -13,7 +13,7 @@ import Link from "next/link";
 interface DashboardStats {
   productCount: number;
   // batchCount: number;
-  userCount: number;
+  //userCount: number;
 }
 
 export default function Home() {
@@ -35,12 +35,12 @@ export default function Home() {
         // Fetch stats from contract
         const productCount = await contract.productCount();
         // const batchCount = await contract.batchCount();
-        const userCount = await contract.userCount();
+        //const userCount = await contract.userCount();
         
         setStats({
           productCount: Number(productCount),
           // batchCount: Number(batchCount),
-          userCount: Number(userCount)
+         // userCount: Number(userCount)
         });
         
         // Check user role
@@ -145,7 +145,7 @@ export default function Home() {
             className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-purple-500"
           >
             <p className="text-sm text-gray-500">Network Users</p>
-            <p className="text-3xl font-bold">{stats.userCount}</p>
+            {/* <p className="text-3xl font-bold">{stats.userCount}</p> */}
           </motion.div>
         </div>
       ) : null}

@@ -11,6 +11,8 @@ import {
   FOOD_SUPPLY_CHAIN_ADDRESS,
 } from "@/constants";
 import ConnectButton from "@/components/ConnectButton";
+import { Utensils } from "lucide-react";
+
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -68,7 +70,7 @@ export default function Navbar() {
   const links = [
     { href: "/register", label: "Register Product", roles: ["FARMER_ROLE", "ADMIN"] },
     { href: "/track", label: "Track Product", roles: ["FARMER_ROLE", "DISTRIBUTOR_ROLE", "RETAILER_ROLE", "QUALITY_CHECKER_ROLE", "ADMIN"] },
-    { href: "/batch", label: "Batch Management", roles: ["FARMER_ROLE", "ADMIN"] },
+    //{ href: "/batch", label: "Batch Management", roles: ["FARMER_ROLE", "ADMIN"] },
     { href: "/footprint", label: "Carbon Footprint", roles: ["DISTRIBUTOR_ROLE", "RETAILER_ROLE", "ADMIN"] },
     { href: "/quality", label: "Quality Check", roles: ["QUALITY_CHECKER_ROLE", "ADMIN"] },
     { href: "/transfer", label: "Transfer Ownership", roles: ["ADMIN"] },
@@ -84,18 +86,22 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-3 z-[10] w-[calc(100vw_-_6%)] right-[50%] translate-x-[50%] flex flex-row items-center justify-between rounded-lg py-2 px-4 backdrop-blur-xl transition-all bg-zinc-900 border border-zinc-800 shadow-lg ">
-      <div className="text-white flex flex-col">
-        <span className="text-xs font-light tracking-widest uppercase hidden md:inline">
-          Supply Chain
-        </span>
-        <Link
-          href="/"
-          className="text-lg md:text-2xl font-bold capitalize text-white hover:underline"
-        >
-          FoodChain AI
-        </Link>
-      </div>
+    <nav className="fixed top-3 z-[10] w-[calc(100vw_-_6%)] right-[50%] translate-x-[50%] flex flex-row items-center justify-between rounded-lg py-2 px-4 backdrop-blur-xl transition-all bg-zinc-900 border border-zinc-800 shadow-lg">
+  <div className="text-white flex flex-col">
+    <div className="flex items-center space-x-2 hidden md:flex">
+      <Utensils className="w-4 h-4 text-white" />
+      <span className="text-xs font-light tracking-widest uppercase">
+        Supply Chain Management
+      </span>
+    </div>
+    <Link
+      href="/"
+      className="text-lg md:text-2xl font-bold capitalize text-white hover:underline"
+    >
+      FoodChain
+    </Link>
+  </div>
+
 
       <div className="flex items-center space-x-3 md:space-x-4">
         {links.map(

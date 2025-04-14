@@ -160,54 +160,86 @@ export default function ProductTracker() {
   };
 
   // Carbon footprint visualization
-  const CarbonFootprint = ({ footprint }: { footprint: { transportEmissions: number, productionEmissions: number, packagingEmissions: number } }) => {
-    if (!footprint) return null;
-    
-    const total = footprint.transportEmissions + footprint.productionEmissions + footprint.packagingEmissions;
-    
-    const transportPercent = (footprint.transportEmissions / total) * 100;
-    const productionPercent = (footprint.productionEmissions / total) * 100;
-    const packagingPercent = (footprint.packagingEmissions / total) * 100;
-    
-    return (
-      <div className="mt-4">
-        <h4 className="font-medium text-black mb-2">Carbon Footprint:</h4>
-        <div className="bg-gray-100 p-3 rounded">
-          <p className="mb-1 text-sm font-medium">Total: {total.toFixed(2)} kg CO2</p>
-          
-          <div className="mb-2">
+  // Carbon footprint visualization with black theme
+const CarbonFootprint = ({ footprint }: { footprint: { transportEmissions: number, productionEmissions: number, packagingEmissions: number } }) => {
+  if (!footprint) return null;
+  
+  const total = footprint.transportEmissions + footprint.productionEmissions + footprint.packagingEmissions;
+  
+  const transportPercent = (footprint.transportEmissions / total) * 100;
+  const productionPercent = (footprint.productionEmissions / total) * 100;
+  const packagingPercent = (footprint.packagingEmissions / total) * 100;
+  
+  return (
+    <div className="mt-4">
+      <h4 className="font-medium text-black mb-3">Carbon Footprint:</h4>
+      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-medium text-gray-700">Total Emissions</span>
+          <span className="text-lg font-bold text-black">{total.toFixed(2)} kg CO₂</span>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
             <div className="flex justify-between mb-1">
-              <span className="text-xs">Transport: {footprint.transportEmissions.toFixed(2)} kg</span>
-              <span className="text-xs">{transportPercent.toFixed(1)}%</span>
+              <span className="text-sm font-medium text-gray-700">Transport</span>
+              <span className="text-sm text-gray-600">{footprint.transportEmissions.toFixed(2)} kg ({transportPercent.toFixed(1)}%)</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${transportPercent}%` }}></div>
-            </div>
-          </div>
-          
-          <div className="mb-2">
-            <div className="flex justify-between mb-1">
-              <span className="text-xs">Production: {footprint.productionEmissions.toFixed(2)} kg</span>
-              <span className="text-xs">{productionPercent.toFixed(1)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${productionPercent}%` }}></div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-black h-2 rounded-full" 
+                style={{ width: `${transportPercent}%` }}
+              ></div>
             </div>
           </div>
           
           <div>
             <div className="flex justify-between mb-1">
-              <span className="text-xs">Packaging: {footprint.packagingEmissions.toFixed(2)} kg</span>
-              <span className="text-xs">{packagingPercent.toFixed(1)}%</span>
+              <span className="text-sm font-medium text-gray-700">Production</span>
+              <span className="text-sm text-gray-600">{footprint.productionEmissions.toFixed(2)} kg ({productionPercent.toFixed(1)}%)</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div className="bg-yellow-500 h-2.5 rounded-full" style={{ width: `${packagingPercent}%` }}></div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-gray-800 h-2 rounded-full" 
+                style={{ width: `${productionPercent}%` }}
+              ></div>
+            </div>
+          </div>
+          
+          <div>
+            <div className="flex justify-between mb-1">
+              <span className="text-sm font-medium text-gray-700">Packaging</span>
+              <span className="text-sm text-gray-600">{footprint.packagingEmissions.toFixed(2)} kg ({packagingPercent.toFixed(1)}%)</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-gray-600 h-2 rounded-full" 
+                style={{ width: `${packagingPercent}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full bg-black mr-2"></div>
+              <span className="text-xs text-gray-600">Transport</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full bg-gray-800 mr-2"></div>
+              <span className="text-xs text-gray-600">Production</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full bg-gray-600 mr-2"></div>
+              <span className="text-xs text-gray-600">Packaging</span>
             </div>
           </div>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md text-black">
@@ -216,7 +248,7 @@ export default function ProductTracker() {
         <label className="block text-black mb-2 text-black" htmlFor="productId">
           Product ID
         </label>
-        <div className="flex">
+        <div className="flex gap-2">
           <input
             id="productId"
             type="number"
@@ -228,7 +260,8 @@ export default function ProductTracker() {
           />
           <button
             onClick={fetchProductHistory}
-            className="bg-blue-500 text-white p-2 rounded-r hover:bg-blue-600 disabled:bg-gray-400"
+            className=" bg-gray-900 hover:bg-gray-800 text-white py-2 px-4  rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          
             disabled={!isConnected || loading || !productId}
           >
             {loading ? (
