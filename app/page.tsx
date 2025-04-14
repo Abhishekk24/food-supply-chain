@@ -84,7 +84,7 @@ export default function Home() {
           <h1 className="text-2xl font-bold mb-2">Food Supply Chain Management</h1>
           <p className="text-gray-600 mb-6">Track food products from farm to table with blockchain verification</p>
           <div className="mb-8">
-            <img src="/api/placeholder/400/320" alt="Food tracking illustration" className="mx-auto rounded-lg" />
+            <img src="/parcel.gif" alt="Food tracking illustration" className="mx-auto rounded-lg" />
           </div>
           <h2 className="text-xl font-semibold mb-4">Connect your wallet to get started</h2>
           <div className="flex justify-center">

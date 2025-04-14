@@ -14,7 +14,15 @@
   }
   
   body {
+    background-color: zinc-900;
     margin: 0;
     padding: 0;
     overflow-x: hidden;
   }
+
+  appkit-button {
+    --appkit-bg: #10b981;
+    --appkit-color: white;
+    --appkit-border-radius: 8px;
+  }
+  

@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-gray-100">
         <AppKitProvider>
           <Navbar />
-          <main className="max-w-6xl mx-auto p-4">
+          <main className="max-w-6xl mx-auto p-4 mt-18">
             <AnimatePresence mode="wait">
               {children}
             </AnimatePresence>

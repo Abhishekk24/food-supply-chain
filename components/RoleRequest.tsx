@@ -6,8 +6,11 @@ import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
 import { BrowserProvider, Contract } from "ethers";
 import type { Eip1193Provider } from "ethers";
 import { FOOD_SUPPLY_CHAIN_ADDRESS, FOOD_SUPPLY_CHAIN_ABI } from "@/constants";
+import { useRoleRequests } from "@/hooks/useRoleRequests";
+
 
 const ROLES = [
+  { id: "ADMIN_ROLE", label: "Admin" },
   { id: "FARMER_ROLE", label: "Farmer" },
   { id: "DISTRIBUTOR_ROLE", label: "Distributor" },
   { id: "RETAILER_ROLE", label: "Retailer" },
@@ -21,6 +24,7 @@ export default function RoleRequest() {
   const [description, setDescription] = useState("");
   const [currentRoles, setCurrentRoles] = useState<string[]>([]);
   const [rolesLoading, setRolesLoading] = useState(true);
+  const { refreshRequests } = useRoleRequests();
   
   const { isConnected, address } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider("eip155");
@@ -32,7 +36,7 @@ export default function RoleRequest() {
         setRolesLoading(false);
         return;
       }
-
+    
       try {
         setRolesLoading(true);
         const ethersProvider = new BrowserProvider(walletProvider as Eip1193Provider);
@@ -40,13 +44,22 @@ export default function RoleRequest() {
         
         const userRoles = [];
         
+        // First check for admin role
+        const adminRole = await contract.ADMIN_ROLE();
+        const isAdmin = await contract.hasRole(adminRole, address);
+        if (isAdmin) {
+          userRoles.push("Admin");
+        }
+    
+        // Then check other roles
         for (const role of ROLES) {
-          const hasRole = await contract.hasRole(await contract[role.id](), address);
+          const roleBytes = await contract[role.id]();
+          const hasRole = await contract.hasRole(roleBytes, address);
           if (hasRole) {
             userRoles.push(role.label);
           }
         }
-
+    
         setCurrentRoles(userRoles);
       } catch (error) {
         console.error("Error checking roles:", error);
@@ -61,21 +74,28 @@ export default function RoleRequest() {
 
   const handleRequestRole = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isConnected) return;
+    if (!isConnected || !address) return;
     
     setLoading(true);
     try {
-      const requests = JSON.parse(localStorage.getItem('roleRequests') || '[]');
-      
+      const existingRequests = JSON.parse(localStorage.getItem('foodChainRoleRequests') || '[]');
       const newRequest = {
-        address,
-        role: selectedRole,
+        id: `request-${Date.now()}`,
+        requesterAddress: address,
+        requestedRole: selectedRole,
+        roleLabel: ROLES.find(r => r.id === selectedRole)?.label || selectedRole,
         description,
         timestamp: new Date().toISOString(),
-        status: 'pending'
+        status: 'pending',
+        approved: false,
+        adminActionTaken: false
       };
       
-      localStorage.setItem('roleRequests', JSON.stringify([...requests, newRequest]));
+      const updatedRequests = [...existingRequests, newRequest];
+      localStorage.setItem('foodChainRoleRequests', JSON.stringify(updatedRequests));
+      
+      // Manually trigger storage event
+      window.dispatchEvent(new Event('storage'));
       
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -86,7 +106,6 @@ export default function RoleRequest() {
       setLoading(false);
     }
   };
-
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-4 text-black">Request Role</h2>
@@ -118,6 +137,7 @@ export default function RoleRequest() {
             className="w-full p-2 border rounded"
             value={selectedRole}
             onChange={(e) => setSelectedRole(e.target.value)}
+            disabled={!isConnected}
           >
             {ROLES.map((role) => (
               <option key={role.id} value={role.id}>
@@ -138,6 +158,7 @@ export default function RoleRequest() {
             placeholder="Explain your request..."
             required
             rows={4}
+            disabled={!isConnected}
           />
         </div>
         <button
