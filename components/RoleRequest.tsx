@@ -1,6 +1,5 @@
 // components/RoleRequest.tsx
 "use client";
-
 import { useState, useEffect } from "react";
 import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
 import { BrowserProvider, Contract } from "ethers";
@@ -8,180 +7,157 @@ import type { Eip1193Provider } from "ethers";
 import { FOOD_SUPPLY_CHAIN_ADDRESS, FOOD_SUPPLY_CHAIN_ABI } from "@/constants";
 import { useRoleRequests } from "@/hooks/useRoleRequests";
 
-
-const ROLES = [
-  { id: "ADMIN_ROLE", label: "Admin" },
-  { id: "FARMER_ROLE", label: "Farmer" },
-  { id: "DISTRIBUTOR_ROLE", label: "Distributor" },
-  { id: "RETAILER_ROLE", label: "Retailer" },
-  { id: "QUALITY_CHECKER_ROLE", label: "Quality Checker" },
+const ROLE_OPTIONS = [
+  { value: "ADMIN_ROLE", label: "Admin" },
+  { value: "FARMER_ROLE", label: "Farmer" },
+  { value: "DISTRIBUTOR_ROLE", label: "Distributor" },
+  { value: "RETAILER_ROLE", label: "Retailer" },
+  { value: "QUALITY_CHECKER_ROLE", label: "Quality Checker" }
 ];
 
 export default function RoleRequest() {
-  const [selectedRole, setSelectedRole] = useState("FARMER_ROLE");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [selectedRole, setSelectedRole] = useState(ROLE_OPTIONS[0].value);
   const [description, setDescription] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [currentRoles, setCurrentRoles] = useState<string[]>([]);
-  const [rolesLoading, setRolesLoading] = useState(true);
-  const { refreshRequests } = useRoleRequests();
-  
+  const [isAdmin, setIsAdmin] = useState(false);
+
   const { isConnected, address } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider("eip155");
+  const { refreshRequests } = useRoleRequests();
+
+  const checkCurrentRoles = async () => {
+    if (!isConnected || !walletProvider || !address) return;
+
+    try {
+      const ethersProvider = new BrowserProvider(walletProvider as Eip1193Provider);
+      const contract = new Contract(
+        FOOD_SUPPLY_CHAIN_ADDRESS,
+        FOOD_SUPPLY_CHAIN_ABI,
+        ethersProvider
+      );
+
+      const roles = [];
+      for (const role of ROLE_OPTIONS) {
+        const hasRole = await contract.hasRole(
+          await contract[role.value](),
+          address
+        );
+        if (hasRole) roles.push(role.label);
+      }
+
+      // Check admin status
+      const adminRole = await contract.ADMIN_ROLE();
+      const hasAdminRole = await contract.hasRole(adminRole, address);
+      setIsAdmin(hasAdminRole);
+
+      setCurrentRoles(roles);
+    } catch (err) {
+      console.error("Error checking roles:", err);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isConnected || !walletProvider || !address) return;
+
+    setIsSubmitting(true);
+    setError("");
+    setSuccess(false);
+
+    try {
+      const ethersProvider = new BrowserProvider(walletProvider as Eip1193Provider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new Contract(
+        FOOD_SUPPLY_CHAIN_ADDRESS,
+        FOOD_SUPPLY_CHAIN_ABI,
+        signer
+      );
+
+      const roleBytes = await contract[selectedRole]();
+      const tx = await contract.requestRole(roleBytes, description);
+      await tx.wait();
+
+      setSuccess(true);
+      setDescription("");
+      refreshRequests();
+      checkCurrentRoles();
+    } catch (err: any) {
+      setError(err.message || "Failed to submit request");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
-    const checkCurrentRoles = async () => {
-      if (!isConnected || !walletProvider || !address) {
-        setCurrentRoles([]);
-        setRolesLoading(false);
-        return;
-      }
-    
-      try {
-        setRolesLoading(true);
-        const ethersProvider = new BrowserProvider(walletProvider as Eip1193Provider);
-        const contract = new Contract(FOOD_SUPPLY_CHAIN_ADDRESS, FOOD_SUPPLY_CHAIN_ABI, ethersProvider);
-        
-        const userRoles = [];
-        
-        // First check for admin role
-        const adminRole = await contract.ADMIN_ROLE();
-        const isAdmin = await contract.hasRole(adminRole, address);
-        if (isAdmin) {
-          userRoles.push("Admin");
-        }
-    
-        // Then check other roles
-        for (const role of ROLES) {
-          const roleBytes = await contract[role.id]();
-          const hasRole = await contract.hasRole(roleBytes, address);
-          if (hasRole) {
-            userRoles.push(role.label);
-          }
-        }
-    
-        setCurrentRoles(userRoles);
-      } catch (error) {
-        console.error("Error checking roles:", error);
-        setCurrentRoles([]);
-      } finally {
-        setRolesLoading(false);
-      }
-    };
-
     checkCurrentRoles();
   }, [isConnected, walletProvider, address]);
 
-  const handleRequestRole = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isConnected || !address) return;
-    
-    setLoading(true);
-    try {
-      const existingRequests = JSON.parse(localStorage.getItem('foodChainRoleRequests') || '[]');
-      const newRequest = {
-        id: `request-${Date.now()}`,
-        requesterAddress: address,
-        requestedRole: selectedRole,
-        roleLabel: ROLES.find(r => r.id === selectedRole)?.label || selectedRole,
-        description,
-        timestamp: new Date().toISOString(),
-        status: 'pending',
-        approved: false,
-        adminActionTaken: false
-      };
-      
-      const updatedRequests = [...existingRequests, newRequest];
-      localStorage.setItem('foodChainRoleRequests', JSON.stringify(updatedRequests));
-      
-      // Manually trigger storage event
-      window.dispatchEvent(new Event('storage'));
-      
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-      setDescription("");
-    } catch (error) {
-      console.error("Failed to request role:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4 text-black">Request Role</h2>
+    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow">
+      <h2 className="text-xl font-semibold mb-4">Request Role</h2>
       
-      {/* Current Roles Section */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <h3 className="text-lg font-medium mb-2 text-black">Your Current Roles</h3>
-        {rolesLoading ? (
-          <p className="text-gray-500">Loading roles...</p>
-        ) : currentRoles.length > 0 ? (
+      {currentRoles.length > 0 && (
+        <div className="mb-4 p-3 bg-gray-50 rounded">
+          <h3 className="font-medium mb-1">Your Current Roles:</h3>
           <ul className="list-disc pl-5">
-            {currentRoles.map((role, index) => (
-              <li key={index} className="text-gray-700">{role}</li>
+            {currentRoles.map((role, i) => (
+              <li key={i}>{role}</li>
             ))}
           </ul>
-        ) : (
-          <p className="text-gray-500">You don't have any roles assigned yet</p>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Role Request Form */}
-      <form onSubmit={handleRequestRole}>
+      <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label className="block text-black mb-2" htmlFor="role">
-            Request New Role
-          </label>
+          <label className="block mb-2 font-medium">Select Role</label>
           <select
-            id="role"
-            className="w-full p-2 border rounded"
             value={selectedRole}
             onChange={(e) => setSelectedRole(e.target.value)}
-            disabled={!isConnected}
+            className="w-full p-2 border rounded"
+            disabled={isSubmitting}
           >
-            {ROLES.map((role) => (
-              <option key={role.id} value={role.id}>
+            {ROLE_OPTIONS.map((role) => (
+              <option key={role.value} value={role.value}>
                 {role.label}
               </option>
             ))}
           </select>
         </div>
+
         <div className="mb-4">
-          <label className="block text-black mb-2" htmlFor="description">
-            Why do you need this role?
-          </label>
+          <label className="block mb-2 font-medium">Description</label>
           <textarea
-            id="description"
-            className="w-full p-2 border rounded"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Explain your request..."
-            required
+            className="w-full p-2 border rounded"
             rows={4}
-            disabled={!isConnected}
+            placeholder="Explain why you need this role..."
+            required
+            disabled={isSubmitting}
           />
         </div>
+
         <button
           type="submit"
-          className="w-full py-3 px-6 bg-gray-900 hover:bg-gray-800 text-white py-2 px-4  rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
-            
-          disabled={!isConnected || loading}
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50"
+          disabled={isSubmitting || !isConnected}
         >
-          {loading ? "Submitting..." : "Submit Request"}
+          {isSubmitting ? "Submitting..." : "Submit Request"}
         </button>
+
+        {!isConnected && (
+          <p className="mt-2 text-red-500">Please connect your wallet first</p>
+        )}
+        {error && <p className="mt-2 text-red-500">{error}</p>}
+        {success && (
+          <p className="mt-2 text-green-600">
+            Request submitted successfully!
+          </p>
+        )}
       </form>
-      
-      {/* Status Messages */}
-      {success && (
-        <div className="mt-4 p-3 bg-green-100 text-green-800 rounded">
-          Role request submitted successfully! An admin will review your request.
-        </div>
-      )}
-      {!isConnected && (
-        <div className="mt-4 p-3 bg-yellow-100 text-yellow-800 rounded">
-          Please connect your wallet to submit a role request.
-        </div>
-      )}
     </div>
   );
 }

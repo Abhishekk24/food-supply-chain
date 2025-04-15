@@ -75,7 +75,7 @@ export default function Navbar() {
     { href: "/quality", label: "Quality Check", roles: ["QUALITY_CHECKER_ROLE", "ADMIN"] },
     { href: "/transfer", label: "Transfer Ownership", roles: ["ADMIN"] },
     { href: "/roles", label: "Role Management", roles: ["ADMIN"] },
-    { href: "/rolerequest", label: "Request Role", roles: ["FARMER_ROLE", "DISTRIBUTOR_ROLE", "RETAILER_ROLE", "QUALITY_CHECKER_ROLE", "ADMIN"] },
+    { href: "/rolerequest", label: "Request Role" , roles : [""]},
   ];
 
   const canAccessLink = (linkRoles: string[]) => {

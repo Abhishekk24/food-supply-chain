@@ -8,15 +8,18 @@ module.exports = {
   },
   networks: {
     sepolia: {
-      provider: () => new HDWalletProvider({
-        mnemonic: {
-          phrase: process.env.MNEMONIC
-        },
-        providerOrUrl: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
-        addressIndex: 0
-      }),
-      network_id: 11155111, // Sepolia's network ID
+      provider: () => {
+        if (!process.env.MNEMONIC || !process.env.INFURA_API_KEY) {
+          throw new Error("Please set your MNEMONIC and INFURA_API_KEY in a .env file");
+        }
+        return new HDWalletProvider(
+          process.env.MNEMONIC,
+          `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`
+        );
+      },
+      network_id: 11155111,
       gas: 5500000,
+      gasPrice: 10000000000, // 10 gwei
       confirmations: 2,
       timeoutBlocks: 200,
       skipDryRun: true

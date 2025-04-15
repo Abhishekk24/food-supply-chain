@@ -58,6 +58,17 @@ contract FoodSupplyChain is AccessControl {
         address currentOwner;
     }
 
+    struct RoleRequest {
+    address requester;
+    bytes32 requestedRole;
+    string description;
+    uint256 timestamp;
+    bool processed;
+    bool approved;
+}
+
+    RoleRequest[] public roleRequests;
+    mapping(address => uint256[]) public userPendingRequests;
     mapping(uint256 => Product) public products;
     mapping(uint256 => CarbonFootprint) public productFootprints;
     mapping(uint256 => Certification[]) public productCertifications;
@@ -73,6 +84,9 @@ contract FoodSupplyChain is AccessControl {
     event CertificationAdded(uint256 productId, string standard, string issuer);
     event BatchCreated(string batchId, uint256[] productIds);
     event BatchOwnershipTransferred(string batchId, address from, address to);
+    event RoleRequested(address indexed requester, bytes32 indexed role, uint256 requestId);
+    event RoleRequestProcessed(uint256 indexed requestId, address indexed requester, bytes32 indexed role, bool approved);
+
 
     constructor() {
         _grantRole(ADMIN_ROLE, msg.sender);
@@ -230,6 +244,66 @@ function getProductHistory(uint256 _productId) public view returns (
         product.previousOwners,
         product.locations
     );
+}
+
+function requestRole(bytes32 _role, string memory _description) public {
+    require(_role == FARMER_ROLE || _role == DISTRIBUTOR_ROLE || 
+            _role == RETAILER_ROLE || _role == QUALITY_CHECKER_ROLE, 
+            "Invalid role requested");
+    require(!hasRole(_role, msg.sender), "Already has this role");
+    
+    uint256 requestId = roleRequests.length;
+    roleRequests.push(RoleRequest({
+        requester: msg.sender,
+        requestedRole: _role,
+        description: _description,
+        timestamp: block.timestamp,
+        processed: false,
+        approved: false
+    }));
+    
+    userPendingRequests[msg.sender].push(requestId);
+    
+    emit RoleRequested(msg.sender, _role, requestId);
+}
+
+function processRoleRequest(uint256 _requestId, bool _approved) public onlyRole(ADMIN_ROLE) {
+    require(_requestId < roleRequests.length, "Request does not exist");
+    RoleRequest storage request = roleRequests[_requestId];
+    require(!request.processed, "Request already processed");
+    
+    request.processed = true;
+    request.approved = _approved;
+    
+    if (_approved) {
+        _grantRole(request.requestedRole, request.requester);
+    }
+    
+    emit RoleRequestProcessed(_requestId, request.requester, request.requestedRole, _approved);
+}
+
+function getPendingRoleRequests() public view returns (uint256[] memory) {
+    uint256 pendingCount = 0;
+    
+    
+    for (uint256 i = 0; i < roleRequests.length; i++) {
+        if (!roleRequests[i].processed) {
+            pendingCount++;
+        }
+    }
+    
+    
+    uint256[] memory pendingIds = new uint256[](pendingCount);
+    uint256 index = 0;
+    
+    for (uint256 i = 0; i < roleRequests.length; i++) {
+        if (!roleRequests[i].processed) {
+            pendingIds[index] = i;
+            index++;
+        }
+    }
+    
+    return pendingIds;
 }
 
 function getProductFootprint(uint256 _productId) public view returns (CarbonFootprint memory) {
